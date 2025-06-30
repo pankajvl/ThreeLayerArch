@@ -1,7 +1,7 @@
-package userhandler
+package user
 
 import (
-	"ThreeLayerArch/service/user"
+	"ThreeLayerArch/models"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -9,8 +9,13 @@ import (
 	"strconv"
 )
 
+type UserService interface {
+	CreateUser(name string) (*models.User, error)
+	GetUserByID(id int) (*models.User, error)
+	View_Users() ([]models.User, error)
+}
 type UserHandler struct {
-	Service *usersvc.UserService
+	Service UserService
 }
 
 func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {

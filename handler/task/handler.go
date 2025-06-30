@@ -2,7 +2,6 @@ package task
 
 import (
 	Models "ThreeLayerArch/models"
-	Services "ThreeLayerArch/service/task"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -11,17 +10,19 @@ import (
 	"strconv"
 )
 
-//type Services interface {
-//	Create(task models.Task) (models.Task, error)
-//	GetByID(id int) (models.Task, error)
-//}
-
+type TaskServices interface {
+	Add_Task(task string) (bool, error)
+	View_Task() ([]Models.Tasks, error)
+	Get_By_ID(i int) (Models.Tasks, error)
+	Update_Task(i int) (bool, error)
+	Delete_Task(i int) (bool, error)
+}
 type Handler struct {
-	service *Services.Service
+	service TaskServices
 }
 
 // New creates a new task handler
-func New(service *Services.Service) *Handler {
+func New(service TaskServices) *Handler {
 	return &Handler{service: service}
 }
 

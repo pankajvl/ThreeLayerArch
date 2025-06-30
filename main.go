@@ -32,7 +32,7 @@ func main() {
 	http.HandleFunc("DELETE /task/{id}", taskHandler.Deletetask)
 
 	userStore := &userstore.UserStore{DB: db}
-	userService := &usersvc.UserService{Store: userStore}
+	userService := &usersvc.Service{Store: userStore}
 	userHandler := &userhandler.UserHandler{Service: userService}
 
 	http.HandleFunc("POST /user", userHandler.CreateUser)

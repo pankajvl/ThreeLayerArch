@@ -1,0 +1,21 @@
+mode: set
+ThreeLayerArch/service/task/service.go:21.36,23.2 1 1
+ThreeLayerArch/service/task/service.go:25.55,26.16 1 1
+ThreeLayerArch/service/task/service.go:26.16,28.3 1 1
+ThreeLayerArch/service/task/service.go:29.2,29.30 1 1
+ThreeLayerArch/service/task/service.go:32.54,35.2 1 1
+ThreeLayerArch/service/task/service.go:37.57,39.30 1 1
+ThreeLayerArch/service/task/service.go:39.30,41.17 2 1
+ThreeLayerArch/service/task/service.go:41.17,44.4 2 0
+ThreeLayerArch/service/task/service.go:45.3,45.18 1 1
+ThreeLayerArch/service/task/service.go:47.2,47.50 1 1
+ThreeLayerArch/service/task/service.go:50.52,51.30 1 1
+ThreeLayerArch/service/task/service.go:51.30,53.17 2 1
+ThreeLayerArch/service/task/service.go:53.17,56.4 2 0
+ThreeLayerArch/service/task/service.go:57.3,57.18 1 1
+ThreeLayerArch/service/task/service.go:59.2,59.42 1 1
+ThreeLayerArch/service/task/service.go:62.52,63.30 1 1
+ThreeLayerArch/service/task/service.go:63.30,65.17 2 1
+ThreeLayerArch/service/task/service.go:65.17,68.4 2 0
+ThreeLayerArch/service/task/service.go:69.3,69.18 1 1
+ThreeLayerArch/service/task/service.go:71.2,71.42 1 1

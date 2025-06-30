@@ -16,8 +16,7 @@ func New(db *sql.DB) *Store {
 }
 
 func (s *Store) AddTask(task string) (bool, error) {
-
-	_, err := s.db.Exec("Insert into tasks (description,completed) values (?,?)", task, false)
+	_, err := s.db.Exec("INSERT INTO tasks (description, completed) VALUES (?, ?)", task, false)
 	if err != nil {
 		log.Printf("Error in STORE.AddTask: %v", err)
 		return false, err
@@ -26,14 +25,12 @@ func (s *Store) AddTask(task string) (bool, error) {
 }
 
 func (s *Store) ViewTask() ([]Models.Tasks, error) {
-
 	var tID int
 	var task string
 	var completed bool
-
 	var answers []Models.Tasks
 
-	row, err := s.db.Query("select * from tasks")
+	row, err := s.db.Query("SELECT * FROM tasks")
 	if err != nil {
 		log.Printf("Error in STORE.View: %v", err)
 		return []Models.Tasks{}, err
@@ -47,18 +44,16 @@ func (s *Store) ViewTask() ([]Models.Tasks, error) {
 			return []Models.Tasks{}, err
 		}
 		answers = append(answers, Models.Tasks{tID, task, completed})
-
 	}
 	return answers, nil
 }
 
 func (s *Store) GetByID(id int) (Models.Tasks, error) {
-
 	var tID int
 	var task string
 	var completed bool
 
-	err := s.db.QueryRow("select * from tasks where id=?", id).Scan(&tID, &task, &completed)
+	err := s.db.QueryRow("SELECT * FROM tasks WHERE id = ?", id).Scan(&tID, &task, &completed)
 	if err != nil {
 		log.Printf("Error in STORE.GetByID: %v", err)
 		return Models.Tasks{}, err
@@ -67,8 +62,7 @@ func (s *Store) GetByID(id int) (Models.Tasks, error) {
 }
 
 func (s *Store) UpdateTask(id int) (bool, error) {
-
-	_, err := s.db.Exec("UPDATE tasks SET completed= true WHERE id=?", id)
+	_, err := s.db.Exec("UPDATE tasks SET completed = TRUE WHERE id = ?", id)
 	if err != nil {
 		log.Printf("Error in STORE.UpdateTask: %v", err)
 		return false, err
@@ -77,8 +71,7 @@ func (s *Store) UpdateTask(id int) (bool, error) {
 }
 
 func (s *Store) DeleteTask(id int) (bool, error) {
-
-	_, err := s.db.Exec("delete from tasks where id=?", id)
+	_, err := s.db.Exec("DELETE FROM tasks WHERE id = ?", id)
 	if err != nil {
 		log.Printf("Error in STORE.DeleteTask: %v", err)
 		return false, err
@@ -87,7 +80,7 @@ func (s *Store) DeleteTask(id int) (bool, error) {
 }
 
 func (s *Store) CheckIfExists(i int) bool {
-	ans := s.db.QueryRow("select id from tasks where id=?", i)
+	ans := s.db.QueryRow("SELECT id FROM tasks WHERE id = ?", i)
 
 	var id int
 	err := ans.Scan(&id)

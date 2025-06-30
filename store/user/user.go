@@ -1,4 +1,4 @@
-package userstore
+package user
 
 import (
 	"ThreeLayerArch/models"
@@ -39,7 +39,7 @@ func (s *UserStore) ViewUsers() ([]models.User, error) {
 
 	var answers []models.User
 
-	row, err := s.DB.Query("select * from users")
+	row, err := s.DB.Query("SELECT * FROM users")
 	if err != nil {
 		log.Printf("Error in STORE.View: %v", err)
 		return []models.User{}, err

@@ -2,16 +2,23 @@ package task
 
 import (
 	Model "ThreeLayerArch/models"
-	Store "ThreeLayerArch/store/task"
 	"errors"
 	"log"
 )
 
+type TaskStore interface {
+	AddTask(task string) (bool, error)
+	ViewTask() ([]Model.Tasks, error)
+	GetByID(id int) (Model.Tasks, error)
+	UpdateTask(id int) (bool, error)
+	DeleteTask(id int) (bool, error)
+	CheckIfExists(i int) bool
+}
 type Service struct {
-	store *Store.Store
+	store TaskStore
 }
 
-func New(store *Store.Store) *Service {
+func New(store TaskStore) *Service {
 	return &Service{store: store}
 }
 
