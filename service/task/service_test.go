@@ -1,119 +1,155 @@
 package task
 
 import (
-	Model "ThreeLayerArch/models"
+	"ThreeLayerArch/models"
 	"errors"
 	"testing"
+
+	"go.uber.org/mock/gomock"
 )
 
-// mockStore implements TaskStore for testing purposes
-type mockStore struct{}
-
-func (m *mockStore) AddTask(task string) (bool, error) {
-	if task == "fail" {
-		return false, errors.New("failed to add task")
-	}
-	return true, nil
-}
-
-func (m *mockStore) ViewTask() ([]Model.Tasks, error) {
-	return []Model.Tasks{{Tid: 1, Task: "Test Task", Completed: false}}, nil
-}
-
-func (m *mockStore) GetByID(id int) (Model.Tasks, error) {
-	if id == 1 {
-		return Model.Tasks{Tid: 1, Task: "Test Task", Completed: false}, nil
-	}
-	return Model.Tasks{}, errors.New("not found")
-}
-
-func (m *mockStore) UpdateTask(id int) (bool, error) {
-	if id == 1 {
-		return true, nil
-	}
-	return false, errors.New("update failed")
-}
-
-func (m *mockStore) DeleteTask(id int) (bool, error) {
-	if id == 1 {
-		return true, nil
-	}
-	return false, errors.New("delete failed")
-}
-
-func (m *mockStore) CheckIfExists(i int) bool {
-	return i == 1
-}
-
 func TestAddTask(t *testing.T) {
-	s := New(&mockStore{})
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	mockStore := NewMockTaskStore(ctrl)
+	service := New(mockStore)
 
-	// Test success
-	ok, err := s.Add_Task("New Task")
-	if !ok || err != nil {
-		t.Errorf("Expected success, got err: %v", err)
-	}
+	t.Run("Success", func(t *testing.T) {
+		mockStore.EXPECT().AddTask("New Task").Return(true, nil)
+		ok, err := service.Add_Task("New Task")
+		if !ok || err != nil {
+			t.Errorf("Expected success, got err: %v", err)
+		}
+	})
 
-	// Test failure
-	ok, err = s.Add_Task("")
-	if err == nil {
-		t.Errorf("Expected error for empty task")
-	}
+	t.Run("Failure - Empty Task", func(t *testing.T) {
+		ok, err := service.Add_Task("")
+		if ok || err == nil {
+			t.Errorf("Expected error for empty task, got ok=%v err=%v", ok, err)
+		}
+	})
 }
 
 func TestViewTask(t *testing.T) {
-	s := New(&mockStore{})
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	mockStore := NewMockTaskStore(ctrl)
+	service := New(mockStore)
 
-	tasks, err := s.View_Task()
-	if err != nil || len(tasks) != 1 {
-		t.Errorf("Expected 1 task, got %v, err: %v", len(tasks), err)
-	}
+	t.Run("Success", func(t *testing.T) {
+		mockStore.EXPECT().ViewTask().Return([]models.Tasks{{Tid: 1, Task: "Test", Completed: false}}, nil)
+		tasks, err := service.View_Task()
+		if err != nil || len(tasks) != 1 {
+			t.Errorf("Expected 1 task, got %v, err: %v", len(tasks), err)
+		}
+	})
+
+	t.Run("Failure", func(t *testing.T) {
+		mockStore.EXPECT().ViewTask().Return(nil, errors.New("db error"))
+		_, err := service.View_Task()
+		if err == nil {
+			t.Errorf("Expected error from ViewTask")
+		}
+	})
 }
 
-func TestGetByID(t *testing.T) {
-	s := New(&mockStore{})
+func TestGetTaskByID(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	mockStore := NewMockTaskStore(ctrl)
+	service := New(mockStore)
 
-	// Exists
-	task, err := s.Get_By_ID(1)
-	if err != nil || task.Tid != 1 {
-		t.Errorf("Expected valid task, got: %v, err: %v", task, err)
-	}
+	t.Run("Found", func(t *testing.T) {
+		mockStore.EXPECT().CheckIfExists(1).Return(true)
+		mockStore.EXPECT().GetByID(1).Return(models.Tasks{Tid: 1, Task: "Test", Completed: false}, nil)
 
-	// Does not exist
-	_, err = s.Get_By_ID(99)
-	if err == nil {
-		t.Errorf("Expected error for missing ID")
-	}
+		taskResult, err := service.Get_By_ID(1)
+		if err != nil || taskResult.Tid != 1 {
+			t.Errorf("Expected valid task, got: %v, err: %v", taskResult, err)
+		}
+	})
+
+	t.Run("Not Found", func(t *testing.T) {
+		mockStore.EXPECT().CheckIfExists(99).Return(false)
+		_, err := service.Get_By_ID(99)
+		if err == nil {
+			t.Errorf("Expected error for missing ID")
+		}
+	})
+
+	t.Run("GetByID Error", func(t *testing.T) {
+		mockStore.EXPECT().CheckIfExists(2).Return(true)
+		mockStore.EXPECT().GetByID(2).Return(models.Tasks{}, errors.New("db error"))
+
+		_, err := service.Get_By_ID(2)
+		if err == nil {
+			t.Errorf("Expected error from GetByID")
+		}
+	})
 }
 
 func TestUpdateTask(t *testing.T) {
-	s := New(&mockStore{})
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	mockStore := NewMockTaskStore(ctrl)
+	service := New(mockStore)
 
-	// Exists
-	ok, err := s.Update_Task(1)
-	if !ok || err != nil {
-		t.Errorf("Expected success, got err: %v", err)
-	}
+	t.Run("Success", func(t *testing.T) {
+		mockStore.EXPECT().CheckIfExists(1).Return(true)
+		mockStore.EXPECT().UpdateTask(1).Return(true, nil)
+		ok, err := service.Update_Task(1)
+		if !ok || err != nil {
+			t.Errorf("Expected success, got err: %v", err)
+		}
+	})
 
-	// Does not exist
-	ok, err = s.Update_Task(99)
-	if err == nil {
-		t.Errorf("Expected error for invalid ID")
-	}
+	t.Run("Failure - Update Error", func(t *testing.T) {
+		mockStore.EXPECT().CheckIfExists(99).Return(true)
+		mockStore.EXPECT().UpdateTask(99).Return(false, errors.New("update failed"))
+		_, err := service.Update_Task(99)
+		if err == nil {
+			t.Errorf("Expected error for invalid ID")
+		}
+	})
+
+	t.Run("Not Found", func(t *testing.T) {
+		mockStore.EXPECT().CheckIfExists(100).Return(false)
+		_, err := service.Update_Task(100)
+		if err == nil {
+			t.Errorf("Expected error when task does not exist")
+		}
+	})
 }
 
 func TestDeleteTask(t *testing.T) {
-	s := New(&mockStore{})
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	mockStore := NewMockTaskStore(ctrl)
+	service := New(mockStore)
 
-	// Exists
-	ok, err := s.Delete_Task(1)
-	if !ok || err != nil {
-		t.Errorf("Expected success, got err: %v", err)
-	}
+	t.Run("Success", func(t *testing.T) {
+		mockStore.EXPECT().CheckIfExists(1).Return(true)
+		mockStore.EXPECT().DeleteTask(1).Return(true, nil)
+		ok, err := service.Delete_Task(1)
+		if !ok || err != nil {
+			t.Errorf("Expected success, got err: %v", err)
+		}
+	})
 
-	// Does not exist
-	ok, err = s.Delete_Task(99)
-	if err == nil {
-		t.Errorf("Expected error for invalid ID")
-	}
+	t.Run("Failure - Delete Error", func(t *testing.T) {
+		mockStore.EXPECT().CheckIfExists(99).Return(true)
+		mockStore.EXPECT().DeleteTask(99).Return(false, errors.New("delete failed"))
+		_, err := service.Delete_Task(99)
+		if err == nil {
+			t.Errorf("Expected error for invalid ID")
+		}
+	})
+
+	t.Run("Not Found", func(t *testing.T) {
+		mockStore.EXPECT().CheckIfExists(100).Return(false)
+		_, err := service.Delete_Task(100)
+		if err == nil {
+			t.Errorf("Expected error when task does not exist")
+		}
+	})
 }

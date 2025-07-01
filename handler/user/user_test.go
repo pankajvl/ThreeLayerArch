@@ -1,155 +1,197 @@
-package user_test
+package user
 
 import (
-	"ThreeLayerArch/handler/user"
 	"ThreeLayerArch/models"
 	"bytes"
 	"errors"
+	"go.uber.org/mock/gomock"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 )
 
-type mockUserService struct {
-	CreateUserFunc  func(name string) (*models.User, error)
-	GetUserByIDFunc func(id int) (*models.User, error)
-	ViewUsersFunc   func() ([]models.User, error)
-}
-
-func (m *mockUserService) CreateUser(name string) (*models.User, error) {
-	return m.CreateUserFunc(name)
-}
-
-func (m *mockUserService) GetUserByID(id int) (*models.User, error) {
-	return m.GetUserByIDFunc(id)
-}
-
-func (m *mockUserService) View_Users() ([]models.User, error) {
-	return m.ViewUsersFunc()
-}
-
-func TestCreateUser_Success(t *testing.T) {
-	service := &mockUserService{
-		CreateUserFunc: func(name string) (*models.User, error) {
-			return &models.User{UserID: 1, Name: name}, nil
+func TestUserHandler(t *testing.T) {
+	tests := []struct {
+		name      string
+		method    string
+		path      string
+		body      []byte
+		setupMock func(*MockUserService)
+		handlerFn func(h *UserHandler, w http.ResponseWriter, r *http.Request)
+		wantCode  int
+		wantBody  []byte
+		setPath   func(r *http.Request)
+	}{
+		{
+			name:   "CreateUser_Success",
+			method: http.MethodPost,
+			path:   "/users",
+			body:   []byte(`{"name": "John"}`),
+			setupMock: func(m *MockUserService) {
+				m.EXPECT().
+					CreateUser("John").
+					Return(&models.User{UserID: 1, Name: "John"}, nil)
+			},
+			handlerFn: func(h *UserHandler, w http.ResponseWriter, r *http.Request) {
+				h.CreateUser(w, r)
+			},
+			wantCode: http.StatusCreated,
+		},
+		{
+			name:   "CreateUser_InvalidBody",
+			method: http.MethodPost,
+			path:   "/users",
+			body:   []byte(`invalid-json`),
+			setupMock: func(m *MockUserService) {
+				// No expectation, parsing fails before call
+			},
+			handlerFn: func(h *UserHandler, w http.ResponseWriter, r *http.Request) {
+				h.CreateUser(w, r)
+			},
+			wantCode: http.StatusBadRequest,
+		},
+		{
+			name:   "CreateUser_Failure_FromService",
+			method: http.MethodPost,
+			path:   "/users",
+			body:   []byte(`{"name": "John"}`),
+			setupMock: func(m *MockUserService) {
+				m.EXPECT().
+					CreateUser("John").
+					Return(nil, errors.New("insert failed"))
+			},
+			handlerFn: func(h *UserHandler, w http.ResponseWriter, r *http.Request) {
+				h.CreateUser(w, r)
+			},
+			wantCode: http.StatusInternalServerError,
+		},
+		{
+			name:   "GetUserByID_Success",
+			method: http.MethodGet,
+			path:   "/users/1",
+			setupMock: func(m *MockUserService) {
+				m.EXPECT().
+					GetUserByID(1).
+					Return(&models.User{UserID: 1, Name: "John"}, nil)
+			},
+			handlerFn: func(h *UserHandler, w http.ResponseWriter, r *http.Request) {
+				h.GetUserByID(w, r)
+			},
+			wantCode: http.StatusOK,
+			setPath: func(r *http.Request) {
+				r.SetPathValue("id", "1")
+			},
+		},
+		{
+			name:   "GetUserByID_NotFound",
+			method: http.MethodGet,
+			path:   "/users/99",
+			setupMock: func(m *MockUserService) {
+				m.EXPECT().
+					GetUserByID(99).
+					Return(nil, nil)
+			},
+			handlerFn: func(h *UserHandler, w http.ResponseWriter, r *http.Request) {
+				h.GetUserByID(w, r)
+			},
+			wantCode: http.StatusNotFound,
+			setPath: func(r *http.Request) {
+				r.SetPathValue("id", "99")
+			},
+		},
+		{
+			name:   "GetUserByID_Error_FromService",
+			method: http.MethodGet,
+			path:   "/users/3",
+			setupMock: func(m *MockUserService) {
+				m.EXPECT().
+					GetUserByID(3).
+					Return(nil, errors.New("db error"))
+			},
+			handlerFn: func(h *UserHandler, w http.ResponseWriter, r *http.Request) {
+				h.GetUserByID(w, r)
+			},
+			wantCode: http.StatusInternalServerError,
+			setPath: func(r *http.Request) {
+				r.SetPathValue("id", "3")
+			},
+		},
+		{
+			name:   "GetUserByID_InvalidID",
+			method: http.MethodGet,
+			path:   "/users/abc",
+			setupMock: func(m *MockUserService) {
+				// No call expected
+			},
+			handlerFn: func(h *UserHandler, w http.ResponseWriter, r *http.Request) {
+				h.GetUserByID(w, r)
+			},
+			wantCode: http.StatusBadRequest,
+			setPath: func(r *http.Request) {
+				r.SetPathValue("id", "abc")
+			},
+		},
+		{
+			name:   "ViewUsers_Success",
+			method: http.MethodGet,
+			path:   "/users",
+			setupMock: func(m *MockUserService) {
+				m.EXPECT().
+					View_Users().
+					Return([]models.User{
+						{UserID: 1, Name: "Alice"},
+						{UserID: 2, Name: "Bob"},
+					}, nil)
+			},
+			handlerFn: func(h *UserHandler, w http.ResponseWriter, r *http.Request) {
+				h.ViewUsers(w, r)
+			},
+			wantCode: http.StatusOK,
+		},
+		{
+			name:   "ViewUsers_Error",
+			method: http.MethodGet,
+			path:   "/users",
+			setupMock: func(m *MockUserService) {
+				m.EXPECT().
+					View_Users().
+					Return(nil, errors.New("db error"))
+			},
+			handlerFn: func(h *UserHandler, w http.ResponseWriter, r *http.Request) {
+				h.ViewUsers(w, r)
+			},
+			wantCode: http.StatusInternalServerError, // Assuming your handler logs and returns 500
 		},
 	}
 
-	handler := user.UserHandler{Service: service}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
 
-	body := []byte(`{"name": "John"}`)
-	req := httptest.NewRequest(http.MethodPost, "/users", bytes.NewReader(body))
-	rec := httptest.NewRecorder()
+			mockSvc := NewMockUserService(ctrl)
+			if tt.setupMock != nil {
+				tt.setupMock(mockSvc)
+			}
 
-	handler.CreateUser(rec, req)
+			handler := &UserHandler{Service: mockSvc}
 
-	if rec.Code != http.StatusCreated {
-		t.Errorf("expected status 201, got %d", rec.Code)
+			req := httptest.NewRequest(tt.method, tt.path, bytes.NewReader(tt.body))
+			if tt.setPath != nil {
+				tt.setPath(req)
+			}
+
+			rec := httptest.NewRecorder()
+
+			tt.handlerFn(handler, rec, req)
+
+			if rec.Code != tt.wantCode {
+				t.Errorf("expected status %d, got %d", tt.wantCode, rec.Code)
+			}
+
+			if tt.wantBody != nil && !bytes.Contains(rec.Body.Bytes(), tt.wantBody) {
+				t.Errorf("expected body to contain %q, got %q", tt.wantBody, rec.Body.String())
+			}
+		})
 	}
-}
-
-func TestCreateUser_InvalidBody(t *testing.T) {
-	service := &mockUserService{}
-	handler := user.UserHandler{Service: service}
-
-	body := []byte(`invalid-json`)
-	req := httptest.NewRequest(http.MethodPost, "/users", bytes.NewReader(body))
-	rec := httptest.NewRecorder()
-
-	handler.CreateUser(rec, req)
-
-	if rec.Code != http.StatusBadRequest {
-		t.Errorf("expected 400, got %d", rec.Code)
-	}
-}
-
-func TestGetUserByID_Success(t *testing.T) {
-	service := &mockUserService{
-		GetUserByIDFunc: func(id int) (*models.User, error) {
-			return &models.User{UserID: id, Name: "John"}, nil
-		},
-	}
-
-	handler := user.UserHandler{Service: service}
-
-	req := httptest.NewRequest(http.MethodGet, "/users/1", nil)
-	req.SetPathValue("id", "1")
-	rec := httptest.NewRecorder()
-
-	handler.GetUserByID(rec, req)
-
-	if rec.Code != http.StatusOK {
-		t.Errorf("expected 200, got %d", rec.Code)
-	}
-}
-
-func TestGetUserByID_NotFound(t *testing.T) {
-	service := &mockUserService{
-		GetUserByIDFunc: func(id int) (*models.User, error) {
-			return nil, nil
-		},
-	}
-
-	handler := user.UserHandler{Service: service}
-
-	req := httptest.NewRequest(http.MethodGet, "/users/99", nil)
-	req.SetPathValue("id", "99")
-	rec := httptest.NewRecorder()
-
-	handler.GetUserByID(rec, req)
-
-	if rec.Code != http.StatusNotFound {
-		t.Errorf("expected 404, got %d", rec.Code)
-	}
-}
-
-func TestViewUsers_Success(t *testing.T) {
-	service := &mockUserService{
-		ViewUsersFunc: func() ([]models.User, error) {
-			return []models.User{
-				{UserID: 1, Name: "Alice"},
-				{UserID: 2, Name: "Bob"},
-			}, nil
-		},
-	}
-
-	handler := user.UserHandler{Service: service}
-
-	req := httptest.NewRequest(http.MethodGet, "/users", nil)
-	rec := httptest.NewRecorder()
-
-	handler.ViewUsers(rec, req)
-
-	if rec.Code != http.StatusOK {
-		t.Errorf("expected 200, got %d", rec.Code)
-	}
-
-	body := rec.Body.String()
-	if body == "" || !contains(body, "Alice") || !contains(body, "Bob") {
-		t.Errorf("unexpected response body: %s", body)
-	}
-}
-
-func TestViewUsers_Error(t *testing.T) {
-	service := &mockUserService{
-		ViewUsersFunc: func() ([]models.User, error) {
-			return nil, errors.New("db error")
-		},
-	}
-
-	handler := user.UserHandler{Service: service}
-
-	req := httptest.NewRequest(http.MethodGet, "/users", nil)
-	rec := httptest.NewRecorder()
-
-	handler.ViewUsers(rec, req)
-
-	if rec.Code != http.StatusOK {
-		t.Errorf("expected 200 even on log error, got %d", rec.Code)
-	}
-}
-
-// Utility function
-func contains(s, substr string) bool {
-	return bytes.Contains([]byte(s), []byte(substr))
 }

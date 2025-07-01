@@ -6,14 +6,6 @@ import (
 	"log"
 )
 
-type TaskStore interface {
-	AddTask(task string) (bool, error)
-	ViewTask() ([]Model.Tasks, error)
-	GetByID(id int) (Model.Tasks, error)
-	UpdateTask(id int) (bool, error)
-	DeleteTask(id int) (bool, error)
-	CheckIfExists(i int) bool
-}
 type Service struct {
 	store TaskStore
 }
@@ -24,7 +16,7 @@ func New(store TaskStore) *Service {
 
 func (s *Service) Add_Task(task string) (bool, error) {
 	if task == "" {
-		return false, errors.New("Task is Empty")
+		return false, errors.New("task cannot be empty")
 	}
 	return s.store.AddTask(task)
 }
