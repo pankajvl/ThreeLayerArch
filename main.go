@@ -1,6 +1,9 @@
 package main
 
 import (
+	userhandler "ThreeLayerArch/handler/user"
+	usersvc "ThreeLayerArch/service/user"
+	userstore "ThreeLayerArch/store/user"
 	"log"
 	"net/http"
 	"time"
@@ -27,6 +30,14 @@ func main() {
 	http.HandleFunc("POST /task", taskHandler.Addtask)
 	http.HandleFunc("PUT /task/{id}", taskHandler.Updatetask)
 	http.HandleFunc("DELETE /task/{id}", taskHandler.Deletetask)
+
+	userStore := &userstore.UserStore{DB: db}
+	userService := &usersvc.UserService{Store: userStore}
+	userHandler := &userhandler.UserHandler{Service: userService}
+
+	http.HandleFunc("POST /user", userHandler.CreateUser)
+	http.HandleFunc("GET /user/{id}", userHandler.GetUserByID)
+	http.HandleFunc("GET /user", userHandler.ViewUsers)
 
 	server := &http.Server{
 		Addr:         ":8080",
