@@ -2,22 +2,21 @@ package task
 
 import (
 	Model "ThreeLayerArch/models"
-	Store "ThreeLayerArch/store/task"
 	"errors"
 	"log"
 )
 
 type Service struct {
-	store *Store.Store
+	store TaskStore
 }
 
-func New(store *Store.Store) *Service {
+func New(store TaskStore) *Service {
 	return &Service{store: store}
 }
 
 func (s *Service) Add_Task(task string) (bool, error) {
 	if task == "" {
-		return false, errors.New("Task is Empty")
+		return false, errors.New("task cannot be empty")
 	}
 	return s.store.AddTask(task)
 }

@@ -1,16 +1,21 @@
-package usersvc
+package user
 
 import (
 	"ThreeLayerArch/models"
-	"ThreeLayerArch/store/user"
 	"errors"
 )
 
-type UserService struct {
-	Store *userstore.UserStore
+type UserStore interface {
+	Create(string) (int, error)
+	GetByID(int) (*models.User, error)
+	ViewUsers() ([]models.User, error)
 }
 
-func (s *UserService) CreateUser(name string) (*models.User, error) {
+type Service struct {
+	Store UserStore
+}
+
+func (s *Service) CreateUser(name string) (*models.User, error) {
 	if name == "" {
 		return nil, errors.New("name cannot be empty")
 	}
@@ -21,10 +26,10 @@ func (s *UserService) CreateUser(name string) (*models.User, error) {
 	return &models.User{UserID: id, Name: name}, nil
 }
 
-func (s *UserService) GetUserByID(id int) (*models.User, error) {
+func (s *Service) GetUserByID(id int) (*models.User, error) {
 	return s.Store.GetByID(id)
 }
-func (s *UserService) View_Users() ([]models.User, error) {
+func (s *Service) View_Users() ([]models.User, error) {
 
 	return s.Store.ViewUsers()
 }
