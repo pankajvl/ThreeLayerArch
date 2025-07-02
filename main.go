@@ -10,9 +10,9 @@ import (
 	store "ThreeLayerArch/store/task"
 	userstore "ThreeLayerArch/store/user"
 	"github.com/swaggo/http-swagger"
+	"gofr.dev/pkg/gofr"
 	"log"
 	"net/http"
-	"time"
 )
 
 // @title           Task Management API
@@ -30,10 +30,13 @@ func main() {
 		log.Println(err)
 		return
 	}
-
+	app := gofr.New()
 	taskStore := store.New(db)
 	taskSvc := service.New(taskStore)
 	taskHandler := handler.New(taskSvc)
+	app.GET("/", func(ctx *gofr.Context) (any, error) {
+		return "Hello World", nil
+	})
 
 	// @Summary      Get all tasks
 	// @Description  Returns a list of all tasks
@@ -41,7 +44,7 @@ func main() {
 	// @Produce      json
 	// @Success      200  {array}  models.Task
 	// @Router       /task [get]
-	http.HandleFunc("GET /task", taskHandler.Viewtask)
+	app.GET("/task", taskHandler.Viewtask)
 
 	// @Summary      Get task by ID
 	// @Description  Returns a task by its ID
@@ -50,7 +53,7 @@ func main() {
 	// @Param        id   path      int  true  "Task ID"
 	// @Success      200  {object}  models.Task
 	// @Router       /task/{id} [get]
-	http.HandleFunc("GET /task/{id}", taskHandler.Gettask)
+	app.GET("/task/{id}", taskHandler.Gettask)
 
 	// @Summary      Create new task
 	// @Description  Adds a new task
@@ -60,7 +63,7 @@ func main() {
 	// @Param        task  body      models.Task  true  "Task to add"
 	// @Success      201   {object}  models.Task
 	// @Router       /task [post]
-	http.HandleFunc("POST /task", taskHandler.Addtask)
+	app.POST("/task", taskHandler.Addtask)
 
 	// @Summary      Update task
 	// @Description  Updates a task by ID
@@ -71,7 +74,7 @@ func main() {
 	// @Param        task  body      models.Task  true  "Updated Task"
 	// @Success      200   {object}  models.Task
 	// @Router       /task/{id} [put]
-	http.HandleFunc("PUT /task/{id}", taskHandler.Updatetask)
+	app.PUT("/task/{id}", taskHandler.Updatetask)
 
 	// @Summary      Delete task
 	// @Description  Deletes a task by ID
@@ -79,7 +82,7 @@ func main() {
 	// @Param        id   path  int  true  "Task ID"
 	// @Success      204  "No Content"
 	// @Router       /task/{id} [delete]
-	http.HandleFunc("DELETE /task/{id}", taskHandler.Deletetask)
+	app.DELETE("/task/{id}", taskHandler.Deletetask)
 
 	userStore := &userstore.UserStore{DB: db}
 	userService := &usersvc.Service{Store: userStore}
@@ -93,7 +96,7 @@ func main() {
 	// @Param        user  body      models.User  true  "User to create"
 	// @Success      201   {object}  models.User
 	// @Router       /user [post]
-	http.HandleFunc("POST /user", userHandler.CreateUser)
+	app.POST("/user", userHandler.CreateUser)
 
 	// @Summary      Get user by ID
 	// @Description  Returns a user by ID
@@ -102,7 +105,7 @@ func main() {
 	// @Param        id   path      int  true  "User ID"
 	// @Success      200  {object}  models.User
 	// @Router       /user/{id} [get]
-	http.HandleFunc("GET /user/{id}", userHandler.GetUserByID)
+	app.GET("/user/{id}", userHandler.GetUserByID)
 
 	// @Summary      View all users
 	// @Description  Returns a list of users
@@ -110,21 +113,10 @@ func main() {
 	// @Produce      json
 	// @Success      200  {array}  models.User
 	// @Router       /user [get]
-	http.HandleFunc("GET /user", userHandler.ViewUsers)
+	app.GET("/user", userHandler.ViewUsers)
 	http.Handle("/swagger/", httpSwagger.WrapHandler)
 
-	server := &http.Server{
-		Addr:         ":8080",
-		Handler:      nil,
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 10 * time.Second,
-		IdleTimeout:  15 * time.Second,
-	}
+	log.Println("Swagger UI at http://localhost:9000/swagger/index.html")
 
-	log.Println("Swagger UI at http://localhost:8080/swagger/index.html")
-
-	err = server.ListenAndServe()
-	if err != nil {
-		log.Fatal(err)
-	}
+	app.Run()
 }

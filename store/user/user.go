@@ -3,6 +3,7 @@ package user
 import (
 	"ThreeLayerArch/models"
 	"database/sql"
+	"gofr.dev/pkg/gofr"
 	"log"
 )
 
@@ -10,8 +11,9 @@ type UserStore struct {
 	DB *sql.DB
 }
 
-func (s *UserStore) Create(name string) (int, error) {
-	res, err := s.DB.Exec("INSERT INTO users (name) VALUES (?)", name)
+func (s *UserStore) Create(ctx *gofr.Context, name string) (int, error) {
+	res, err := ctx.SQL.ExecContext(ctx, "INSERT INTO users (name) VALUES (?)", name)
+
 	if err != nil {
 		return 0, err
 	}
@@ -19,9 +21,9 @@ func (s *UserStore) Create(name string) (int, error) {
 	return int(id), nil
 }
 
-func (s *UserStore) GetByID(id int) (*models.User, error) {
+func (s *UserStore) GetByID(ctx *gofr.Context, id int) (*models.User, error) {
 	var user models.User
-	err := s.DB.QueryRow("SELECT id, name FROM users WHERE id = ?", id).
+	err := ctx.SQL.QueryRowContext(ctx, "SELECT id, name FROM users WHERE id = ?", id).
 		Scan(&user.UserID, &user.Name)
 	if err == sql.ErrNoRows {
 		return nil, nil
@@ -32,14 +34,14 @@ func (s *UserStore) GetByID(id int) (*models.User, error) {
 	return &user, nil
 }
 
-func (s *UserStore) ViewUsers() ([]models.User, error) {
+func (s *UserStore) ViewUsers(ctx *gofr.Context) ([]models.User, error) {
 
 	var uID int
 	var Name string
 
 	var answers []models.User
 
-	row, err := s.DB.Query("SELECT * FROM users")
+	row, err := ctx.SQL.QueryContext(ctx, "SELECT * FROM users")
 	if err != nil {
 		log.Printf("Error in STORE.View: %v", err)
 		return []models.User{}, err

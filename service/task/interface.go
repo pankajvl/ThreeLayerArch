@@ -1,12 +1,15 @@
 package task
 
-import Model "ThreeLayerArch/models"
+import (
+	Model "ThreeLayerArch/models"
+	"gofr.dev/pkg/gofr"
+)
 
 type TaskStore interface {
-	AddTask(task string) (bool, error)
-	ViewTask() ([]Model.Tasks, error)
-	GetByID(id int) (Model.Tasks, error)
-	UpdateTask(id int) (bool, error)
-	DeleteTask(id int) (bool, error)
-	CheckIfExists(i int) bool
+	AddTask(ctx *gofr.Context, task string) (bool, error)
+	ViewTask(ctx *gofr.Context) ([]Model.Tasks, error)
+	GetByID(ctx *gofr.Context, id int) (Model.Tasks, error)
+	UpdateTask(ctx *gofr.Context, id int) (bool, error)
+	DeleteTask(ctx *gofr.Context, id int) (bool, error)
+	CheckIfExists(ctx *gofr.Context, i int) bool
 }

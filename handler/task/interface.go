@@ -1,11 +1,14 @@
 package task
 
-import "ThreeLayerArch/models"
+import (
+	"ThreeLayerArch/models"
+	"gofr.dev/pkg/gofr"
+)
 
 type TaskService interface {
-	Add_Task(task string) (bool, error)
-	View_Task() ([]models.Tasks, error)
-	Get_By_ID(i int) (models.Tasks, error)
-	Update_Task(i int) (bool, error)
-	Delete_Task(i int) (bool, error)
+	Add_Task(ctx *gofr.Context, task string) (bool, error)
+	View_Task(ctx *gofr.Context) ([]models.Tasks, error)
+	Get_By_ID(ctx *gofr.Context, i int) (models.Tasks, error)
+	Update_Task(ctx *gofr.Context, i int) (bool, error)
+	Delete_Task(ctx *gofr.Context, i int) (bool, error)
 }

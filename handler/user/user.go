@@ -2,10 +2,7 @@ package user
 
 import (
 	"ThreeLayerArch/models"
-	"encoding/json"
-	"fmt"
-	"log"
-	"net/http"
+	"gofr.dev/pkg/gofr"
 	"strconv"
 )
 
@@ -26,22 +23,19 @@ type UserHandler struct {
 // @Failure      500   {string}  string  "Failed to create user"
 // @Router       /user [post]
 
-func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) CreateUser(ctx *gofr.Context) (any, error) {
 	var req models.UserRequest
 
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.Name == "" {
-		http.Error(w, "Invalid request", http.StatusBadRequest)
-		return
+	if err := ctx.Bind(&req); err != nil || req.Name == "" {
+		return nil, err
 	}
 
-	user, err := h.Service.CreateUser(req.Name)
+	user, err := h.Service.CreateUser(ctx, req.Name)
 	if err != nil {
-		http.Error(w, "Failed to create user", http.StatusInternalServerError)
-		return
+		return nil, err
 	}
 
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(user)
+	return user, nil
 }
 
 // GetUserByID godoc
@@ -55,25 +49,22 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 // @Failure      404  {string}  string  "User not found"
 // @Failure      500  {string}  string  "Error fetching user"
 // @Router       /user/{id} [get]
-func (h *UserHandler) GetUserByID(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.Atoi(r.PathValue("id"))
+func (h *UserHandler) GetUserByID(ctx *gofr.Context) (any, error) {
+	id, err := strconv.Atoi(ctx.PathParam("id"))
 	if err != nil {
-		http.Error(w, "Invalid ID", http.StatusBadRequest)
-		return
+		return nil, err
 	}
 
-	user, err := h.Service.GetUserByID(id)
+	user, err := h.Service.GetUserByID(ctx, id)
 
 	if err != nil {
-		http.Error(w, "Error fetching user", http.StatusInternalServerError)
-		return
+		return nil, err
 	}
 
 	if user == nil {
-		http.Error(w, "User not found", http.StatusNotFound)
-		return
+		return "Not Found", nil
 	}
-	json.NewEncoder(w).Encode(user)
+	return user, nil
 }
 
 // ViewUsers godoc
@@ -84,16 +75,11 @@ func (h *UserHandler) GetUserByID(w http.ResponseWriter, r *http.Request) {
 // @Success      200  {string}  string  "List of users"
 // @Failure      500  {string}  string  "Internal Server Error"
 // @Router       /user [get]
-func (h *UserHandler) ViewUsers(w http.ResponseWriter, _ *http.Request) {
-	ans, err := h.Service.View_Users()
+func (h *UserHandler) ViewUsers(ctx *gofr.Context) (any, error) {
+	ans, err := h.Service.View_Users(ctx)
 
 	if err != nil {
-		log.Printf("Error in HANDLER.ViewUsers: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		return nil, err
 	}
-
-	for _, v := range ans {
-		fmt.Fprintf(w, "ID: %d, Name: %s\n", v.UserID, v.Name)
-	}
+	return ans, nil
 }
