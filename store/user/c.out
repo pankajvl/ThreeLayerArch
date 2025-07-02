@@ -1,0 +1,16 @@
+mode: set
+ThreeLayerArch/store/user/user.go:13.54,15.16 2 1
+ThreeLayerArch/store/user/user.go:15.16,17.3 1 0
+ThreeLayerArch/store/user/user.go:18.2,19.21 2 1
+ThreeLayerArch/store/user/user.go:22.59,26.26 3 1
+ThreeLayerArch/store/user/user.go:26.26,28.3 1 1
+ThreeLayerArch/store/user/user.go:29.2,29.16 1 1
+ThreeLayerArch/store/user/user.go:29.16,31.3 1 0
+ThreeLayerArch/store/user/user.go:32.2,32.19 1 1
+ThreeLayerArch/store/user/user.go:35.56,43.16 5 1
+ThreeLayerArch/store/user/user.go:43.16,46.3 2 0
+ThreeLayerArch/store/user/user.go:48.2,49.17 2 1
+ThreeLayerArch/store/user/user.go:49.17,51.17 2 1
+ThreeLayerArch/store/user/user.go:51.17,54.4 2 0
+ThreeLayerArch/store/user/user.go:55.3,55.52 1 1
+ThreeLayerArch/store/user/user.go:58.2,58.21 1 1

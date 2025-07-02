@@ -1,153 +1,132 @@
 package task
 
 import (
-	Models "ThreeLayerArch/models"
-	Services "ThreeLayerArch/service/task"
-	"encoding/json"
-	"fmt"
-	"io"
-	"log"
-	"net/http"
+	"gofr.dev/pkg/gofr"
 	"strconv"
 )
 
-//type Services interface {
-//	Create(task models.Task) (models.Task, error)
-//	GetByID(id int) (models.Task, error)
-//}
-
+// Handler handles HTTP requests for tasks
 type Handler struct {
-	service *Services.Service
+	service TaskService
 }
 
 // New creates a new task handler
-func New(service *Services.Service) *Handler {
+func New(service TaskService) *Handler {
 	return &Handler{service: service}
 }
 
-func (h *Handler) Addtask(w http.ResponseWriter, r *http.Request) {
-
-	defer r.Body.Close()
-
-	msg, err := io.ReadAll(r.Body)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		log.Printf("%s", err.Error())
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-
-		return
-	}
-
+// Addtask godoc
+// @Summary      Add a new task
+// @Description  Create a task with the provided task description
+// @Tags         tasks
+// @Accept       json
+// @Produce      json
+// @Param        task  body  object  true  "Task content"
+// @Success      201   {string}  string  "Created"
+// @Failure      400   {string}  string  "Invalid request body"
+// @Failure      500   {string}  string  "Failed to create task"
+// @Router       /task [post]
+func (h *Handler) Addtask(ctx *gofr.Context) (any, error) {
 	var reqBody struct {
-		T string `json:"task"`
+		Task string `json:"task"`
 	}
-
-	err = json.Unmarshal(msg, &reqBody)
+	err := ctx.Bind(&reqBody)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		log.Printf("%s", err.Error())
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-
-		return
+		return nil, err
 	}
 
-	ans, err := h.service.Add_Task(reqBody.T)
-
-	if err != nil {
-		log.Printf("Error in HANDLER.AddTask: %v", err)
-		log.Printf("%s", err.Error())
-		return
+	ok, err := h.service.Add_Task(ctx, reqBody.Task)
+	if err != nil || !ok {
+		return nil, err
 	}
 
-	if ans {
-		w.WriteHeader(http.StatusCreated)
-		w.Write([]byte("Task added"))
-		return
-	}
+	return "inserted successfully", nil
 }
 
-func (h *Handler) Viewtask(w http.ResponseWriter, r *http.Request) {
-	ans, err := h.service.View_Task()
+// Viewtask godoc
+// @Summary      View all tasks
+// @Description  Retrieve a list of all tasks
+// @Tags         tasks
+// @Produce      json
+// @Success      200  {array}  models.Tasks
+// @Failure      500  {string}  string  "Failed to retrieve tasks"
+// @Router       /task [get]
+func (h *Handler) Viewtask(ctx *gofr.Context) (any, error) {
+	tasks, err := h.service.View_Task(ctx)
 	if err != nil {
-		log.Printf("Error in HANDLER.Viewtask: %v", err)
-		return
+		return nil, err
 	}
-	for _, v := range ans {
-		fmt.Fprintf(w, "ID: %d, Task: %s, Completed: %t\n", v.Tid, v.Task, v.Completed)
-	}
+	return tasks, nil
 }
 
-func (h *Handler) Gettask(w http.ResponseWriter, r *http.Request) {
-	defer r.Body.Close()
-
-	index, err := strconv.Atoi(r.PathValue("id"))
+// Gettask godoc
+// @Summary      Get a task by ID
+// @Description  Retrieve a task by its ID
+// @Tags         tasks
+// @Produce      json
+// @Param        id   path      int  true  "Task ID"
+// @Success      200  {object}  models.Tasks
+// @Failure      400  {string}  string  "Invalid task ID"
+// @Failure      404  {string}  string  "Task not found"
+// @Router       /task/{id} [get]
+func (h *Handler) Gettask(ctx *gofr.Context) (any, error) {
+	idStr, err := strconv.Atoi(ctx.PathParam("id"))
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		log.Printf("%s", err.Error())
-		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-
-		return
+		return nil, err
 	}
 
-	var ans Models.Tasks
-
-	ans, err = h.service.Get_By_ID(index)
+	task, err := h.service.Get_By_ID(ctx, idStr)
 	if err != nil {
-		log.Printf("%s", err.Error())
-		return
+		return nil, err
 	}
 
-	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, "ID: %d, Task: %s, Completed: %t\n", ans.Tid, ans.Task, ans.Completed)
+	return task, nil
 }
 
-func (h *Handler) Updatetask(w http.ResponseWriter, r *http.Request) {
-	defer r.Body.Close()
-
-	index, err := strconv.Atoi(r.PathValue("id"))
+// Updatetask godoc
+// @Summary      Update a task
+// @Description  Mark a task as completed or update its status
+// @Tags         tasks
+// @Produce      json
+// @Param        id   path  int  true  "Task ID"
+// @Success      200  {string}  string  "Updated"
+// @Failure      400  {string}  string  "Invalid task ID"
+// @Failure      500  {string}  string  "Failed to update task"
+// @Router       /task/{id} [put]
+func (h *Handler) Updatetask(ctx *gofr.Context) (any, error) {
+	idStr, err := strconv.Atoi(ctx.PathParam("id"))
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		log.Printf("%s", err.Error())
-		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-
-		return
+		return nil, err
 	}
 
-	var ans bool
-	ans, err = h.service.Update_Task(index)
-	if err != nil {
-		log.Printf("%s", err.Error())
-		return
+	ok, err := h.service.Update_Task(ctx, idStr)
+	if err != nil || !ok {
+		return nil, err
 	}
-	if ans {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("Task updated"))
-	}
+
+	return "updated successfully", nil
 }
 
-func (h *Handler) Deletetask(w http.ResponseWriter, r *http.Request) {
-	defer r.Body.Close()
-
-	index, err := strconv.Atoi(r.PathValue("id"))
+// Deletetask godoc
+// @Summary      Delete a task
+// @Description  Remove a task by its ID
+// @Tags         tasks
+// @Produce      json
+// @Param        id   path  int  true  "Task ID"
+// @Success      200  {string}  string  "Deleted"
+// @Failure      400  {string}  string  "Invalid task ID"
+// @Failure      500  {string}  string  "Failed to delete task"
+// @Router       /task/{id} [delete]
+func (h *Handler) Deletetask(ctx *gofr.Context) (any, error) {
+	idStr, err := strconv.Atoi(ctx.PathParam("id"))
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		log.Printf("%s", err.Error())
-		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-
-		return
+		return nil, err
 	}
 
-	var ans bool
-	ans, err = h.service.Delete_Task(index)
-	if err != nil {
-		log.Printf("%s", err.Error())
-		return
+	ok, err := h.service.Delete_Task(ctx, idStr)
+	if err != nil || !ok {
+		return nil, err
 	}
-	if ans {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("Task deleted"))
 
-	}
+	return "deleted successfully", nil
 }
-
-// added comment for creating pr

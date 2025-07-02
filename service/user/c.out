@@ -1,0 +1,8 @@
+mode: set
+ThreeLayerArch/service/user/user.go:18.65,19.16 1 0
+ThreeLayerArch/service/user/user.go:19.16,21.3 1 0
+ThreeLayerArch/service/user/user.go:22.2,23.16 2 0
+ThreeLayerArch/service/user/user.go:23.16,25.3 1 0
+ThreeLayerArch/service/user/user.go:26.2,26.50 1 0
+ThreeLayerArch/service/user/user.go:29.61,31.2 1 1
+ThreeLayerArch/service/user/user.go:32.55,35.2 1 0

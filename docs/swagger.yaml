@@ -1,0 +1,203 @@
+basePath: /
+definitions:
+  models.Tasks:
+    properties:
+      completed:
+        type: boolean
+      task:
+        type: string
+      tid:
+        type: integer
+    type: object
+  models.User:
+    properties:
+      name:
+        type: string
+      userID:
+        type: integer
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: pankaj@example.com
+    name: Pankaj Venkat
+  description: API for managing tasks and users.
+  title: Task Management API
+  version: "1.0"
+paths:
+  /task:
+    get:
+      description: Retrieve a list of all tasks
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Tasks'
+            type: array
+        "500":
+          description: Failed to retrieve tasks
+          schema:
+            type: string
+      summary: View all tasks
+      tags:
+      - tasks
+    post:
+      consumes:
+      - application/json
+      description: Create a task with the provided task description
+      parameters:
+      - description: Task content
+        in: body
+        name: task
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            type: string
+        "400":
+          description: Invalid request body
+          schema:
+            type: string
+        "500":
+          description: Failed to create task
+          schema:
+            type: string
+      summary: Add a new task
+      tags:
+      - tasks
+  /task/{id}:
+    delete:
+      description: Remove a task by its ID
+      parameters:
+      - description: Task ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Deleted
+          schema:
+            type: string
+        "400":
+          description: Invalid task ID
+          schema:
+            type: string
+        "500":
+          description: Failed to delete task
+          schema:
+            type: string
+      summary: Delete a task
+      tags:
+      - tasks
+    get:
+      description: Retrieve a task by its ID
+      parameters:
+      - description: Task ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Tasks'
+        "400":
+          description: Invalid task ID
+          schema:
+            type: string
+        "404":
+          description: Task not found
+          schema:
+            type: string
+      summary: Get a task by ID
+      tags:
+      - tasks
+    put:
+      description: Mark a task as completed or update its status
+      parameters:
+      - description: Task ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Updated
+          schema:
+            type: string
+        "400":
+          description: Invalid task ID
+          schema:
+            type: string
+        "500":
+          description: Failed to update task
+          schema:
+            type: string
+      summary: Update a task
+      tags:
+      - tasks
+  /user:
+    get:
+      description: Returns a list of all users
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: List of users
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Get all users
+      tags:
+      - users
+  /user/{id}:
+    get:
+      description: Retrieves a user by their ID
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.User'
+        "400":
+          description: Invalid ID
+          schema:
+            type: string
+        "404":
+          description: User not found
+          schema:
+            type: string
+        "500":
+          description: Error fetching user
+          schema:
+            type: string
+      summary: Get user by ID
+      tags:
+      - users
+swagger: "2.0"
