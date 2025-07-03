@@ -2,7 +2,7 @@ name: Go CI/CD Pipeline
 
 on:
   push:
-    branches: [ "main","June_23" ]
+    branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
 
@@ -10,9 +10,7 @@ jobs:
   build_and_dockerize:
     name: 🔨 Build & 🐳 Dockerize
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory:  Day_8/taskAPI
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
