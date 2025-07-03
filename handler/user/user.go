@@ -2,6 +2,7 @@ package user
 
 import (
 	"ThreeLayerArch/models"
+	"errors"
 	"gofr.dev/pkg/gofr"
 	"strconv"
 )
@@ -26,8 +27,11 @@ type UserHandler struct {
 func (h *UserHandler) CreateUser(ctx *gofr.Context) (any, error) {
 	var req models.UserRequest
 
-	if err := ctx.Bind(&req); err != nil || req.Name == "" {
+	if err := ctx.Bind(&req); err != nil {
 		return nil, err
+	}
+	if req.Name == "" {
+		return nil, errors.New("missing or empty name")
 	}
 
 	user, err := h.Service.CreateUser(ctx, req.Name)

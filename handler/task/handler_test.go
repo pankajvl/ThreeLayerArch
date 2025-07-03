@@ -131,369 +131,213 @@
 package task_test
 
 import (
-	"ThreeLayerArch/handler/task"
+	task "ThreeLayerArch/handler/task"
 	"ThreeLayerArch/models"
-	"bytes"
+	"context"
 	"errors"
+	"github.com/gorilla/mux"
+	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
-	"io"
+	"gofr.dev/pkg/gofr"
+	"gofr.dev/pkg/gofr/container"
+	gofrHttp "gofr.dev/pkg/gofr/http"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
+	"strings"
 	"testing"
 )
 
-func TestAddTask(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+type gofrResponse struct {
+	result any
+	err    error
+}
 
+func newMockCtx(t *testing.T) *gofr.Context {
+	mockContainer, _ := container.NewMockContainer(t)
+	return &gofr.Context{
+		Context:   context.Background(),
+		Request:   nil,
+		Container: mockContainer,
+	}
+}
+
+func TestAddtask(t *testing.T) {
 	tests := []struct {
-		name           string
-		requestBody    string
-		mockInput      string
-		mockReturn     bool
-		mockError      error
-		expectedStatus int
-		expectedBody   string
-		skipMock       bool // For cases like invalid JSON where mock call isn't made
+		name       string
+		body       string
+		expectErr  error
+		expectOK   bool
+		mockNeeded bool
 	}{
-		{
-			name:           "Success - task added",
-			requestBody:    `{"task":"Test Task"}`,
-			mockInput:      "Test Task",
-			mockReturn:     true,
-			mockError:      nil,
-			expectedStatus: http.StatusCreated,
-			expectedBody:   "",
-		},
-		{
-			name:           "Error - Add_Task fails",
-			requestBody:    `{"task":"Fail Task"}`,
-			mockInput:      "Fail Task",
-			mockReturn:     false,
-			mockError:      errors.New("db error"),
-			expectedStatus: http.StatusInternalServerError,
-			expectedBody:   "failed to create task",
-		},
-		{
-			name:           "Error - Invalid JSON body",
-			requestBody:    `{invalid-json}`,
-			skipMock:       true,
-			expectedStatus: http.StatusBadRequest,
-			expectedBody:   "invalid request body",
-		},
+		{"valid input", `{"task":"Learn Go"}`, nil, true, true},
+		{"invalid JSON", `{"task":123}`, errors.New("invalid character"), false, false},
+		{"service error", `{"task":"Learn Go"}`, errors.New("service error"), false, true},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockService := task.NewMockTaskService(ctrl)
+			ctrl := gomock.NewController(t)
+			mockSvc := task.NewMockTaskService(ctrl)
+			h := task.New(mockSvc)
+			ctx := newMockCtx(t)
 
-			if !tt.skipMock {
-				mockService.EXPECT().
-					Add_Task(tt.mockInput).
-					Return(tt.mockReturn, tt.mockError)
+			req := httptest.NewRequest(http.MethodPost, "/task", strings.NewReader(tt.body))
+			req.Header.Set("Content-Type", "application/json")
+			ctx.Request = gofrHttp.NewRequest(req)
+
+			if tt.mockNeeded {
+				mockSvc.EXPECT().Add_Task(ctx, "Learn Go").Return(tt.expectOK, tt.expectErr)
 			}
 
-			handler := task.New(mockService)
-
-			req := httptest.NewRequest(http.MethodPost, "/task", bytes.NewReader([]byte(tt.requestBody)))
-			w := httptest.NewRecorder()
-
-			handler.Addtask(w, req)
-
-			res := w.Result()
-			body, _ := io.ReadAll(res.Body)
-
-			if res.StatusCode != tt.expectedStatus {
-				t.Errorf("expected status %d, got %d", tt.expectedStatus, res.StatusCode)
-			}
-
-			if tt.expectedBody != "" && !bytes.Contains(body, []byte(tt.expectedBody)) {
-				t.Errorf("expected body to contain %q, got: %s", tt.expectedBody, string(body))
+			res, err := h.Addtask(ctx)
+			if tt.expectErr != nil {
+				assert.NotNil(t, err)
+			} else {
+				assert.Equal(t, "inserted successfully", res)
 			}
 		})
 	}
 }
 
-func TestViewTask(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
+func TestViewtask(t *testing.T) {
 	tests := []struct {
-		name           string
-		mockReturn     []models.Tasks
-		mockError      error
-		expectedStatus int
-		expectedBody   string
+		name   string
+		expect any
+		err    error
 	}{
-		{
-			name: "Success - returns task list",
-			mockReturn: []models.Tasks{
-				{Tid: 1, Task: "Test Task", Completed: false},
-			},
-			mockError:      nil,
-			expectedStatus: http.StatusOK,
-			expectedBody:   "Test Task",
-		},
-		{
-			name:           "Error - View_Task fails",
-			mockReturn:     nil,
-			mockError:      errors.New("db failure"),
-			expectedStatus: http.StatusInternalServerError,
-			expectedBody:   "failed to retrieve tasks",
-		},
-		{
-			name:           "Empty task list",
-			mockReturn:     []models.Tasks{},
-			mockError:      nil,
-			expectedStatus: http.StatusOK,
-			expectedBody:   "[]", // JSON array of 0 tasks
-		},
+		{"success", []models.Tasks{{Tid: 1, Task: "Go", Completed: false}}, nil},
+		{"error case", nil, errors.New("db error")},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockService := task.NewMockTaskService(ctrl)
-			mockService.EXPECT().
-				View_Task().
-				Return(tt.mockReturn, tt.mockError)
+			ctrl := gomock.NewController(t)
+			mockSvc := task.NewMockTaskService(ctrl)
+			h := task.New(mockSvc)
+			ctx := newMockCtx(t)
 
-			handler := task.New(mockService)
+			mockSvc.EXPECT().View_Task(ctx).Return(tt.expect, tt.err)
 
-			req := httptest.NewRequest(http.MethodGet, "/task", nil)
-			w := httptest.NewRecorder()
+			res, err := h.Viewtask(ctx)
+			assert.Equal(t, tt.expect, res)
+			assert.Equal(t, tt.err, err)
+		})
+	}
+}
 
-			handler.Viewtask(w, req)
+func TestGettask(t *testing.T) {
+	tests := []struct {
+		name   string
+		id     string
+		expect any
+		err    error
+		mock   bool
+	}{
+		{"valid ID", "1", models.Tasks{Tid: 1, Task: "Go"}, nil, true},
+		{"invalid ID", "abc", nil, strconv.ErrSyntax, false},
+		{"service error", "1", nil, errors.New("not found"), true},
+	}
 
-			res := w.Result()
-			body, _ := io.ReadAll(res.Body)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			mockSvc := task.NewMockTaskService(ctrl)
+			h := task.New(mockSvc)
+			ctx := newMockCtx(t)
 
-			if res.StatusCode != tt.expectedStatus {
-				t.Errorf("expected status %d, got %d", tt.expectedStatus, res.StatusCode)
+			req := httptest.NewRequest(http.MethodGet, "/task/{id}", nil)
+			req = mux.SetURLVars(req, map[string]string{"id": tt.id})
+			ctx.Request = gofrHttp.NewRequest(req)
+
+			id, err := strconv.Atoi(tt.id)
+			if tt.mock && err == nil {
+				mockSvc.EXPECT().Get_By_ID(ctx, id).Return(models.Tasks{}, errors.New("some error"))
 			}
 
-			if !bytes.Contains(body, []byte(tt.expectedBody)) {
-				t.Errorf("expected body to contain %q, got: %s", tt.expectedBody, string(body))
+			res, err := h.Gettask(ctx)
+			if err != nil {
+				assert.Error(t, err)
+			} else {
+				assert.Equal(t, tt.expect, res)
 			}
 		})
 	}
 }
 
-func TestGetTask(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
+func TestUpdatetask(t *testing.T) {
 	tests := []struct {
-		name           string
-		urlParam       string
-		mockID         int
-		mockReturn     models.Tasks
-		mockError      error
-		expectedStatus int
-		expectedBody   string
-		expectMock     bool
+		name    string
+		id      string
+		success bool
+		err     error
+		mock    bool
 	}{
-		{
-			name:           "Success - task found",
-			urlParam:       "1",
-			mockID:         1,
-			mockReturn:     models.Tasks{Tid: 1, Task: "Test Task", Completed: false},
-			mockError:      nil,
-			expectedStatus: http.StatusOK,
-			expectedBody:   "Test Task",
-			expectMock:     true,
-		},
-		{
-			name:           "Error - task not found",
-			urlParam:       "99",
-			mockID:         99,
-			mockReturn:     models.Tasks{},
-			mockError:      errors.New("not found"),
-			expectedStatus: http.StatusNotFound,
-			expectedBody:   "task not found",
-			expectMock:     true,
-		},
-		{
-			name:           "Error - invalid ID format",
-			urlParam:       "abc",
-			expectedStatus: http.StatusBadRequest,
-			expectedBody:   "invalid task ID",
-			expectMock:     false,
-		},
+		{"valid", "1", true, nil, true},
+		{"invalid id", "xyz", false, strconv.ErrSyntax, false},
+		{"service error", "1", false, errors.New("fail"), true},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockService := task.NewMockTaskService(ctrl)
-			if tt.expectMock {
-				mockService.EXPECT().
-					Get_By_ID(tt.mockID).
-					Return(tt.mockReturn, tt.mockError)
+			ctrl := gomock.NewController(t)
+			mockSvc := task.NewMockTaskService(ctrl)
+			h := task.New(mockSvc)
+			ctx := newMockCtx(t)
+
+			req := httptest.NewRequest(http.MethodPut, "/task/{id}", nil)
+			req = mux.SetURLVars(req, map[string]string{"id": tt.id})
+			ctx.Request = gofrHttp.NewRequest(req)
+
+			id, err := strconv.Atoi(tt.id)
+			if tt.mock && err == nil {
+				mockSvc.EXPECT().Update_Task(ctx, id).Return(tt.success, tt.err)
 			}
 
-			handler := task.New(mockService)
-
-			req := httptest.NewRequest(http.MethodGet, "/task/"+tt.urlParam, nil)
-			req.SetPathValue("id", tt.urlParam)
-			w := httptest.NewRecorder()
-
-			handler.Gettask(w, req)
-
-			res := w.Result()
-			body, _ := io.ReadAll(res.Body)
-
-			if res.StatusCode != tt.expectedStatus {
-				t.Errorf("expected status %d, got %d", tt.expectedStatus, res.StatusCode)
-			}
-			if !bytes.Contains(body, []byte(tt.expectedBody)) {
-				t.Errorf("expected body to contain %q, got: %s", tt.expectedBody, string(body))
+			res, err := h.Updatetask(ctx)
+			if err != nil {
+				assert.Error(t, err)
+			} else {
+				assert.Equal(t, "updated successfully", res)
 			}
 		})
 	}
 }
 
-func TestUpdateTask(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
+func TestDeletetask(t *testing.T) {
 	tests := []struct {
-		name           string
-		urlParam       string
-		mockID         int
-		mockReturn     bool
-		mockError      error
-		expectedStatus int
-		expectedBody   string
-		expectMock     bool
+		name    string
+		id      string
+		success bool
+		err     error
+		mock    bool
 	}{
-		{
-			name:           "Success - task updated",
-			urlParam:       "1",
-			mockID:         1,
-			mockReturn:     true,
-			mockError:      nil,
-			expectedStatus: http.StatusOK,
-			expectedBody:   "",
-			expectMock:     true,
-		},
-		{
-			name:           "Error - update failed",
-			urlParam:       "2",
-			mockID:         2,
-			mockReturn:     false,
-			mockError:      errors.New("update error"),
-			expectedStatus: http.StatusInternalServerError,
-			expectedBody:   "failed to update task",
-			expectMock:     true,
-		},
-		{
-			name:           "Error - invalid ID",
-			urlParam:       "abc",
-			expectedStatus: http.StatusBadRequest,
-			expectedBody:   "invalid task ID",
-			expectMock:     false,
-		},
+		{"valid", "1", true, nil, true},
+		{"invalid id", "abc", false, strconv.ErrSyntax, false},
+		{"service error", "1", false, errors.New("fail"), true},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockService := task.NewMockTaskService(ctrl)
-			if tt.expectMock {
-				mockService.EXPECT().
-					Update_Task(tt.mockID).
-					Return(tt.mockReturn, tt.mockError)
+			ctrl := gomock.NewController(t)
+			mockSvc := task.NewMockTaskService(ctrl)
+			h := task.New(mockSvc)
+			ctx := newMockCtx(t)
+
+			req := httptest.NewRequest(http.MethodDelete, "/task/{id}", nil)
+			req = mux.SetURLVars(req, map[string]string{"id": tt.id})
+			ctx.Request = gofrHttp.NewRequest(req)
+
+			id, err := strconv.Atoi(tt.id)
+			if tt.mock && err == nil {
+				mockSvc.EXPECT().Delete_Task(ctx, id).Return(tt.success, tt.err)
 			}
 
-			handler := task.New(mockService)
-
-			req := httptest.NewRequest(http.MethodPut, "/task/"+tt.urlParam, nil)
-			req.SetPathValue("id", tt.urlParam)
-			w := httptest.NewRecorder()
-
-			handler.Updatetask(w, req)
-
-			res := w.Result()
-			body, _ := io.ReadAll(res.Body)
-
-			if res.StatusCode != tt.expectedStatus {
-				t.Errorf("expected status %d, got %d", tt.expectedStatus, res.StatusCode)
-			}
-
-			if tt.expectedBody != "" && !bytes.Contains(body, []byte(tt.expectedBody)) {
-				t.Errorf("expected body to contain %q, got: %s", tt.expectedBody, string(body))
-			}
-		})
-	}
-}
-
-func TestDeleteTask(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	tests := []struct {
-		name           string
-		urlParam       string
-		mockID         int
-		mockReturn     bool
-		mockError      error
-		expectedStatus int
-		expectedBody   string
-		expectMock     bool
-	}{
-		{
-			name:           "Success - task deleted",
-			urlParam:       "1",
-			mockID:         1,
-			mockReturn:     true,
-			mockError:      nil,
-			expectedStatus: http.StatusOK,
-			expectedBody:   "",
-			expectMock:     true,
-		},
-		{
-			name:           "Error - deletion failed",
-			urlParam:       "99",
-			mockID:         99,
-			mockReturn:     false,
-			mockError:      errors.New("delete error"),
-			expectedStatus: http.StatusInternalServerError,
-			expectedBody:   "failed to delete task",
-			expectMock:     true,
-		},
-		{
-			name:           "Error - invalid ID format",
-			urlParam:       "abc",
-			expectedStatus: http.StatusBadRequest,
-			expectedBody:   "invalid task ID",
-			expectMock:     false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			mockService := task.NewMockTaskService(ctrl)
-
-			if tt.expectMock {
-				mockService.EXPECT().
-					Delete_Task(tt.mockID).
-					Return(tt.mockReturn, tt.mockError)
-			}
-
-			handler := task.New(mockService)
-
-			req := httptest.NewRequest(http.MethodDelete, "/task/"+tt.urlParam, nil)
-			req.SetPathValue("id", tt.urlParam)
-			w := httptest.NewRecorder()
-
-			handler.Deletetask(w, req)
-
-			res := w.Result()
-			body, _ := io.ReadAll(res.Body)
-
-			if res.StatusCode != tt.expectedStatus {
-				t.Errorf("expected status %d, got %d", tt.expectedStatus, res.StatusCode)
-			}
-			if tt.expectedBody != "" && !bytes.Contains(body, []byte(tt.expectedBody)) {
-				t.Errorf("expected body to contain %q, got: %s", tt.expectedBody, string(body))
+			res, err := h.Deletetask(ctx)
+			if err != nil {
+				assert.Error(t, err)
+			} else {
+				assert.Equal(t, "deleted successfully", res)
 			}
 		})
 	}

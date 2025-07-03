@@ -81,14 +81,13 @@ func (s *Store) DeleteTask(ctx *gofr.Context, id int) (bool, error) {
 }
 
 func (s *Store) CheckIfExists(ctx *gofr.Context, i int) bool {
-	ans, err := ctx.SQL.QueryContext(ctx, "SELECT id FROM tasks WHERE id = ?", i)
-
 	var id int
-	err = ans.Scan(&id)
+	err := ctx.SQL.QueryRowContext(ctx, "SELECT id FROM tasks WHERE id = ?", i).Scan(&id)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return false
 		}
+		return false
 	}
 	return true
 }

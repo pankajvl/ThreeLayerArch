@@ -14,6 +14,7 @@ import (
 	reflect "reflect"
 
 	gomock "go.uber.org/mock/gomock"
+	gofr "gofr.dev/pkg/gofr"
 )
 
 // MockTaskStore is a mock of TaskStore interface.
@@ -41,90 +42,90 @@ func (m *MockTaskStore) EXPECT() *MockTaskStoreMockRecorder {
 }
 
 // AddTask mocks base method.
-func (m *MockTaskStore) AddTask(task string) (bool, error) {
+func (m *MockTaskStore) AddTask(ctx *gofr.Context, task string) (bool, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddTask", task)
+	ret := m.ctrl.Call(m, "AddTask", ctx, task)
 	ret0, _ := ret[0].(bool)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // AddTask indicates an expected call of AddTask.
-func (mr *MockTaskStoreMockRecorder) AddTask(task any) *gomock.Call {
+func (mr *MockTaskStoreMockRecorder) AddTask(ctx, task any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddTask", reflect.TypeOf((*MockTaskStore)(nil).AddTask), task)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddTask", reflect.TypeOf((*MockTaskStore)(nil).AddTask), ctx, task)
 }
 
 // CheckIfExists mocks base method.
-func (m *MockTaskStore) CheckIfExists(i int) bool {
+func (m *MockTaskStore) CheckIfExists(ctx *gofr.Context, i int) bool {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CheckIfExists", i)
+	ret := m.ctrl.Call(m, "CheckIfExists", ctx, i)
 	ret0, _ := ret[0].(bool)
 	return ret0
 }
 
 // CheckIfExists indicates an expected call of CheckIfExists.
-func (mr *MockTaskStoreMockRecorder) CheckIfExists(i any) *gomock.Call {
+func (mr *MockTaskStoreMockRecorder) CheckIfExists(ctx, i any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckIfExists", reflect.TypeOf((*MockTaskStore)(nil).CheckIfExists), i)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckIfExists", reflect.TypeOf((*MockTaskStore)(nil).CheckIfExists), ctx, i)
 }
 
 // DeleteTask mocks base method.
-func (m *MockTaskStore) DeleteTask(id int) (bool, error) {
+func (m *MockTaskStore) DeleteTask(ctx *gofr.Context, id int) (bool, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteTask", id)
+	ret := m.ctrl.Call(m, "DeleteTask", ctx, id)
 	ret0, _ := ret[0].(bool)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // DeleteTask indicates an expected call of DeleteTask.
-func (mr *MockTaskStoreMockRecorder) DeleteTask(id any) *gomock.Call {
+func (mr *MockTaskStoreMockRecorder) DeleteTask(ctx, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteTask", reflect.TypeOf((*MockTaskStore)(nil).DeleteTask), id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteTask", reflect.TypeOf((*MockTaskStore)(nil).DeleteTask), ctx, id)
 }
 
 // GetByID mocks base method.
-func (m *MockTaskStore) GetByID(id int) (models.Tasks, error) {
+func (m *MockTaskStore) GetByID(ctx *gofr.Context, id int) (models.Tasks, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetByID", id)
+	ret := m.ctrl.Call(m, "GetByID", ctx, id)
 	ret0, _ := ret[0].(models.Tasks)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetByID indicates an expected call of GetByID.
-func (mr *MockTaskStoreMockRecorder) GetByID(id any) *gomock.Call {
+func (mr *MockTaskStoreMockRecorder) GetByID(ctx, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByID", reflect.TypeOf((*MockTaskStore)(nil).GetByID), id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByID", reflect.TypeOf((*MockTaskStore)(nil).GetByID), ctx, id)
 }
 
 // UpdateTask mocks base method.
-func (m *MockTaskStore) UpdateTask(id int) (bool, error) {
+func (m *MockTaskStore) UpdateTask(ctx *gofr.Context, id int) (bool, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateTask", id)
+	ret := m.ctrl.Call(m, "UpdateTask", ctx, id)
 	ret0, _ := ret[0].(bool)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // UpdateTask indicates an expected call of UpdateTask.
-func (mr *MockTaskStoreMockRecorder) UpdateTask(id any) *gomock.Call {
+func (mr *MockTaskStoreMockRecorder) UpdateTask(ctx, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateTask", reflect.TypeOf((*MockTaskStore)(nil).UpdateTask), id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateTask", reflect.TypeOf((*MockTaskStore)(nil).UpdateTask), ctx, id)
 }
 
 // ViewTask mocks base method.
-func (m *MockTaskStore) ViewTask() ([]models.Tasks, error) {
+func (m *MockTaskStore) ViewTask(ctx *gofr.Context) ([]models.Tasks, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ViewTask")
+	ret := m.ctrl.Call(m, "ViewTask", ctx)
 	ret0, _ := ret[0].([]models.Tasks)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ViewTask indicates an expected call of ViewTask.
-func (mr *MockTaskStoreMockRecorder) ViewTask() *gomock.Call {
+func (mr *MockTaskStoreMockRecorder) ViewTask(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ViewTask", reflect.TypeOf((*MockTaskStore)(nil).ViewTask))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ViewTask", reflect.TypeOf((*MockTaskStore)(nil).ViewTask), ctx)
 }

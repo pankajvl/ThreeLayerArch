@@ -1,52 +1,189 @@
 package user
 
 import (
-	Model "ThreeLayerArch/models"
+	"ThreeLayerArch/models"
 	"errors"
+	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
+	"gofr.dev/pkg/gofr"
 	"testing"
 )
 
-type mockStore struct{}
+func TestService_CreateUser(t *testing.T) {
+	tests := []struct {
+		name          string
+		input         string
+		mockReturnID  int
+		mockReturnErr error
+		expectResult  *models.User
+		expectErr     error
+		mockStoreCall bool
+	}{
+		{
+			name:          "Empty name",
+			input:         "",
+			expectResult:  nil,
+			expectErr:     errors.New("name cannot be empty"),
+			mockStoreCall: false,
+		},
+		{
+			name:          "Store error",
+			input:         "Alice",
+			mockReturnID:  0,
+			mockReturnErr: errors.New("store error"),
+			expectResult:  nil,
+			expectErr:     errors.New("store error"),
+			mockStoreCall: true,
+		},
+		{
+			name:          "Success",
+			input:         "Alice",
+			mockReturnID:  1,
+			mockReturnErr: nil,
+			expectResult:  &models.User{UserID: 1, Name: "Alice"},
+			expectErr:     nil,
+			mockStoreCall: true,
+		},
+	}
 
-func (m mockStore) Create(name string) (int, error) {
-	return 0, nil
-}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
 
-func (m mockStore) GetByID(id int) (*Model.User, error) {
-	switch id {
-	case 1:
-		return &Model.User{UserID: 1, Name: "Ram"}, nil
-	case 2:
-		return &Model.User{UserID: 2, Name: "Shyam"}, nil
-	default:
-		return nil, errors.New("not found")
+			mockStore := NewMockUserStore(ctrl)
+			svc := &Service{Store: mockStore}
+			ctx := &gofr.Context{}
+
+			if tt.mockStoreCall {
+				mockStore.EXPECT().
+					Create(ctx, tt.input).
+					Return(tt.mockReturnID, tt.mockReturnErr)
+			}
+
+			result, err := svc.CreateUser(ctx, tt.input)
+			assert.Equal(t, tt.expectResult, result)
+
+			if tt.expectErr != nil {
+				assert.EqualError(t, err, tt.expectErr.Error())
+			} else {
+				assert.NoError(t, err)
+			}
+		})
 	}
 }
 
-func (m mockStore) ViewUsers() ([]Model.User, error) {
-	return nil, nil
+func TestService_GetUserByID(t *testing.T) {
+	tests := []struct {
+		name        string
+		inputID     int
+		mockReturn  *models.User
+		mockError   error
+		expectUser  *models.User
+		expectError error
+	}{
+		{
+			name:        "User not found",
+			inputID:     1,
+			mockReturn:  nil,
+			mockError:   nil,
+			expectUser:  nil,
+			expectError: nil,
+		},
+		{
+			name:        "Store error",
+			inputID:     2,
+			mockReturn:  nil,
+			mockError:   errors.New("db error"),
+			expectUser:  nil,
+			expectError: errors.New("db error"),
+		},
+		{
+			name:        "Success",
+			inputID:     3,
+			mockReturn:  &models.User{UserID: 3, Name: "Bob"},
+			mockError:   nil,
+			expectUser:  &models.User{UserID: 3, Name: "Bob"},
+			expectError: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockStore := NewMockUserStore(ctrl)
+			svc := &Service{Store: mockStore}
+			ctx := &gofr.Context{}
+
+			mockStore.EXPECT().
+				GetByID(ctx, tt.inputID).
+				Return(tt.mockReturn, tt.mockError)
+
+			user, err := svc.GetUserByID(ctx, tt.inputID)
+			assert.Equal(t, tt.expectUser, user)
+
+			if tt.expectError != nil {
+				assert.EqualError(t, err, tt.expectError.Error())
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
 }
 
-func TestGetByID(t *testing.T) {
-	svc := Service{Store: mockStore{}}
-
-	res, err := svc.GetUserByID(1)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+func TestService_View_Users(t *testing.T) {
+	tests := []struct {
+		name        string
+		mockReturn  []models.User
+		mockError   error
+		expectUsers []models.User
+		expectError error
+	}{
+		{
+			name:        "Store error",
+			mockReturn:  nil,
+			mockError:   errors.New("fetch error"),
+			expectUsers: nil,
+			expectError: errors.New("fetch error"),
+		},
+		{
+			name: "Success",
+			mockReturn: []models.User{
+				{UserID: 1, Name: "Alice"},
+				{UserID: 2, Name: "Bob"},
+			},
+			mockError: nil,
+			expectUsers: []models.User{
+				{UserID: 1, Name: "Alice"},
+				{UserID: 2, Name: "Bob"},
+			},
+			expectError: nil,
+		},
 	}
-	if res.UserID != 1 || res.Name != "Ram" {
-		t.Errorf("expected ID 1 and Name Ram, got ID: %d, Name: %s", res.UserID, res.Name)
-	}
-}
 
-func TestGetByID_NotFound(t *testing.T) {
-	svc := Service{Store: mockStore{}}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
 
-	res, err := svc.GetUserByID(999)
-	if err == nil {
-		t.Fatal("expected error but got nil")
-	}
-	if res != nil {
-		t.Errorf("expected nil user, got: %+v", res)
+			mockStore := NewMockUserStore(ctrl)
+			svc := &Service{Store: mockStore}
+			ctx := &gofr.Context{}
+
+			mockStore.EXPECT().
+				ViewUsers(ctx).
+				Return(tt.mockReturn, tt.mockError)
+
+			users, err := svc.View_Users(ctx)
+			assert.Equal(t, tt.expectUsers, users)
+
+			if tt.expectError != nil {
+				assert.EqualError(t, err, tt.expectError.Error())
+			} else {
+				assert.NoError(t, err)
+			}
+		})
 	}
 }

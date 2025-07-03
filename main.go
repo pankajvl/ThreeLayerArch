@@ -5,6 +5,7 @@ import (
 	_ "ThreeLayerArch/docs"
 	handler "ThreeLayerArch/handler/task"
 	userhandler "ThreeLayerArch/handler/user"
+	"ThreeLayerArch/migrations/migrations"
 	service "ThreeLayerArch/service/task"
 	usersvc "ThreeLayerArch/service/user"
 	store "ThreeLayerArch/store/task"
@@ -31,6 +32,9 @@ func main() {
 		return
 	}
 	app := gofr.New()
+
+	app.Migrate(migrations.All())
+
 	taskStore := store.New(db)
 	taskSvc := service.New(taskStore)
 	taskHandler := handler.New(taskSvc)
