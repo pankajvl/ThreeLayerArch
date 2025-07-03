@@ -1,0 +1,26 @@
+mode: set
+ThreeLayerArch/store/task/store.go:15.29,17.2 1 1
+ThreeLayerArch/store/task/store.go:19.71,21.16 2 0
+ThreeLayerArch/store/task/store.go:21.16,24.3 2 0
+ThreeLayerArch/store/task/store.go:25.2,25.18 1 0
+ThreeLayerArch/store/task/store.go:28.69,35.16 6 1
+ThreeLayerArch/store/task/store.go:35.16,38.3 2 1
+ThreeLayerArch/store/task/store.go:40.2,41.17 2 1
+ThreeLayerArch/store/task/store.go:41.17,43.17 2 1
+ThreeLayerArch/store/task/store.go:43.17,46.4 2 1
+ThreeLayerArch/store/task/store.go:47.3,47.64 1 1
+ThreeLayerArch/store/task/store.go:49.2,49.21 1 1
+ThreeLayerArch/store/task/store.go:52.74,58.16 5 1
+ThreeLayerArch/store/task/store.go:58.16,61.3 2 1
+ThreeLayerArch/store/task/store.go:62.2,62.48 1 1
+ThreeLayerArch/store/task/store.go:65.69,67.16 2 1
+ThreeLayerArch/store/task/store.go:67.16,70.3 2 1
+ThreeLayerArch/store/task/store.go:71.2,71.18 1 1
+ThreeLayerArch/store/task/store.go:74.69,76.16 2 1
+ThreeLayerArch/store/task/store.go:76.16,79.3 2 1
+ThreeLayerArch/store/task/store.go:80.2,80.18 1 1
+ThreeLayerArch/store/task/store.go:83.62,86.16 3 1
+ThreeLayerArch/store/task/store.go:86.16,87.27 1 1
+ThreeLayerArch/store/task/store.go:87.27,89.4 1 1
+ThreeLayerArch/store/task/store.go:90.3,90.15 1 1
+ThreeLayerArch/store/task/store.go:92.2,92.13 1 1

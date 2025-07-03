@@ -1,0 +1,26 @@
+mode: set
+ThreeLayerArch/handler/user/mock_interface.go:33.67,37.2 3 1
+ThreeLayerArch/handler/user/mock_interface.go:40.65,42.2 1 1
+ThreeLayerArch/handler/user/mock_interface.go:45.92,51.2 5 1
+ThreeLayerArch/handler/user/mock_interface.go:54.79,57.2 2 1
+ThreeLayerArch/handler/user/mock_interface.go:60.88,66.2 5 1
+ThreeLayerArch/handler/user/mock_interface.go:69.78,72.2 2 1
+ThreeLayerArch/handler/user/mock_interface.go:75.80,81.2 5 1
+ThreeLayerArch/handler/user/mock_interface.go:84.73,87.2 2 1
+ThreeLayerArch/handler/user/user.go:27.66,30.39 2 1
+ThreeLayerArch/handler/user/user.go:30.39,32.3 1 0
+ThreeLayerArch/handler/user/user.go:33.2,33.20 1 1
+ThreeLayerArch/handler/user/user.go:33.20,35.3 1 1
+ThreeLayerArch/handler/user/user.go:37.2,38.16 2 1
+ThreeLayerArch/handler/user/user.go:38.16,40.3 1 1
+ThreeLayerArch/handler/user/user.go:42.2,42.18 1 1
+ThreeLayerArch/handler/user/user.go:56.67,58.16 2 1
+ThreeLayerArch/handler/user/user.go:58.16,60.3 1 1
+ThreeLayerArch/handler/user/user.go:62.2,64.16 2 1
+ThreeLayerArch/handler/user/user.go:64.16,66.3 1 1
+ThreeLayerArch/handler/user/user.go:68.2,68.17 1 1
+ThreeLayerArch/handler/user/user.go:68.17,70.3 1 1
+ThreeLayerArch/handler/user/user.go:71.2,71.18 1 1
+ThreeLayerArch/handler/user/user.go:82.65,85.16 2 1
+ThreeLayerArch/handler/user/user.go:85.16,87.3 1 0
+ThreeLayerArch/handler/user/user.go:88.2,88.17 1 1

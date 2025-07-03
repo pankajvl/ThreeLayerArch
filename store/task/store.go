@@ -3,6 +3,7 @@ package task
 import (
 	Models "ThreeLayerArch/models"
 	"database/sql"
+	"gofr.dev/pkg/gofr"
 	"log"
 )
 
@@ -15,9 +16,8 @@ func New(db *sql.DB) *Store {
 	return &Store{db: db}
 }
 
-func (s *Store) AddTask(task string) (bool, error) {
-
-	_, err := s.db.Exec("Insert into tasks (description,completed) values (?,?)", task, false)
+func (s *Store) AddTask(ctx *gofr.Context, task string) (bool, error) {
+	_, err := ctx.SQL.ExecContext(ctx, "INSERT INTO tasks (description, completed) VALUES (?, ?)", task, false)
 	if err != nil {
 		log.Printf("Error in STORE.AddTask: %v", err)
 		return false, err
@@ -25,15 +25,13 @@ func (s *Store) AddTask(task string) (bool, error) {
 	return true, nil
 }
 
-func (s *Store) ViewTask() ([]Models.Tasks, error) {
-
+func (s *Store) ViewTask(ctx *gofr.Context) ([]Models.Tasks, error) {
 	var tID int
 	var task string
 	var completed bool
-
 	var answers []Models.Tasks
 
-	row, err := s.db.Query("select * from tasks")
+	row, err := ctx.SQL.QueryContext(ctx, "SELECT * FROM tasks")
 	if err != nil {
 		log.Printf("Error in STORE.View: %v", err)
 		return []Models.Tasks{}, err
@@ -47,18 +45,16 @@ func (s *Store) ViewTask() ([]Models.Tasks, error) {
 			return []Models.Tasks{}, err
 		}
 		answers = append(answers, Models.Tasks{tID, task, completed})
-
 	}
 	return answers, nil
 }
 
-func (s *Store) GetByID(id int) (Models.Tasks, error) {
-
+func (s *Store) GetByID(ctx *gofr.Context, id int) (Models.Tasks, error) {
 	var tID int
 	var task string
 	var completed bool
 
-	err := s.db.QueryRow("select * from tasks where id=?", id).Scan(&tID, &task, &completed)
+	err := ctx.SQL.QueryRowContext(ctx, "SELECT * FROM tasks WHERE id = ?", id).Scan(&tID, &task, &completed)
 	if err != nil {
 		log.Printf("Error in STORE.GetByID: %v", err)
 		return Models.Tasks{}, err
@@ -66,9 +62,8 @@ func (s *Store) GetByID(id int) (Models.Tasks, error) {
 	return Models.Tasks{tID, task, completed}, nil
 }
 
-func (s *Store) UpdateTask(id int) (bool, error) {
-
-	_, err := s.db.Exec("UPDATE tasks SET completed= true WHERE id=?", id)
+func (s *Store) UpdateTask(ctx *gofr.Context, id int) (bool, error) {
+	_, err := ctx.SQL.ExecContext(ctx, "UPDATE tasks SET completed = TRUE WHERE id = ?", id)
 	if err != nil {
 		log.Printf("Error in STORE.UpdateTask: %v", err)
 		return false, err
@@ -76,9 +71,8 @@ func (s *Store) UpdateTask(id int) (bool, error) {
 	return true, nil
 }
 
-func (s *Store) DeleteTask(id int) (bool, error) {
-
-	_, err := s.db.Exec("delete from tasks where id=?", id)
+func (s *Store) DeleteTask(ctx *gofr.Context, id int) (bool, error) {
+	_, err := ctx.SQL.ExecContext(ctx, "DELETE FROM tasks WHERE id = ?", id)
 	if err != nil {
 		log.Printf("Error in STORE.DeleteTask: %v", err)
 		return false, err
@@ -86,15 +80,14 @@ func (s *Store) DeleteTask(id int) (bool, error) {
 	return true, nil
 }
 
-func (s *Store) CheckIfExists(i int) bool {
-	ans := s.db.QueryRow("select id from tasks where id=?", i)
-
+func (s *Store) CheckIfExists(ctx *gofr.Context, i int) bool {
 	var id int
-	err := ans.Scan(&id)
+	err := ctx.SQL.QueryRowContext(ctx, "SELECT id FROM tasks WHERE id = ?", i).Scan(&id)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return false
 		}
+		return false
 	}
 	return true
 }

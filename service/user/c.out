@@ -1,0 +1,16 @@
+mode: set
+ThreeLayerArch/service/user/mock_interface.go:33.63,37.2 3 1
+ThreeLayerArch/service/user/mock_interface.go:40.61,42.2 1 1
+ThreeLayerArch/service/user/mock_interface.go:45.77,51.2 5 1
+ThreeLayerArch/service/user/mock_interface.go:54.73,57.2 2 1
+ThreeLayerArch/service/user/mock_interface.go:60.82,66.2 5 1
+ThreeLayerArch/service/user/mock_interface.go:69.72,72.2 2 1
+ThreeLayerArch/service/user/mock_interface.go:75.77,81.2 5 1
+ThreeLayerArch/service/user/mock_interface.go:84.70,87.2 2 1
+ThreeLayerArch/service/user/user.go:13.84,14.16 1 1
+ThreeLayerArch/service/user/user.go:14.16,16.3 1 1
+ThreeLayerArch/service/user/user.go:17.2,18.16 2 1
+ThreeLayerArch/service/user/user.go:18.16,20.3 1 1
+ThreeLayerArch/service/user/user.go:21.2,21.50 1 1
+ThreeLayerArch/service/user/user.go:24.80,26.2 1 1
+ThreeLayerArch/service/user/user.go:27.72,30.2 1 1
