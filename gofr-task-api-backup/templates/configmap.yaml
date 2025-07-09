@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-config
+data:
+  DB_HOST: {{ .Release.Name }}-mysql
+  DB_USER: {{ .Values.config.dbUser | quote }}
+  DB_PASSWORD: {{ .Values.config.dbPassword | quote }}
+  DB_NAME: {{ .Values.config.dbName | quote }}
+  DB_PORT: {{ .Values.config.dbPort | quote }}
+  DB_DIALECT: {{ .Values.config.dbDialect | quote }}

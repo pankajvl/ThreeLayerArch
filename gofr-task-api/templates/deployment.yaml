@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "gofr-task-api.fullname" . }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ include "gofr-task-api.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "gofr-task-api.name" . }}
+    spec:
+      containers:
+        - name: gofr-task-api
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: {{ include "gofr-task-api.fullname" . }}-config
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}

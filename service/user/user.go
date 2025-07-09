@@ -1,30 +1,30 @@
-package usersvc
+package user
 
 import (
 	"ThreeLayerArch/models"
-	"ThreeLayerArch/store/user"
 	"errors"
+	"gofr.dev/pkg/gofr"
 )
 
-type UserService struct {
-	Store *userstore.UserStore
+type Service struct {
+	Store UserStore
 }
 
-func (s *UserService) CreateUser(name string) (*models.User, error) {
+func (s *Service) CreateUser(ctx *gofr.Context, name string) (*models.User, error) {
 	if name == "" {
 		return nil, errors.New("name cannot be empty")
 	}
-	id, err := s.Store.Create(name)
+	id, err := s.Store.Create(ctx, name)
 	if err != nil {
 		return nil, err
 	}
 	return &models.User{UserID: id, Name: name}, nil
 }
 
-func (s *UserService) GetUserByID(id int) (*models.User, error) {
-	return s.Store.GetByID(id)
+func (s *Service) GetUserByID(ctx *gofr.Context, id int) (*models.User, error) {
+	return s.Store.GetByID(ctx, id)
 }
-func (s *UserService) View_Users() ([]models.User, error) {
+func (s *Service) View_Users(ctx *gofr.Context) ([]models.User, error) {
 
-	return s.Store.ViewUsers()
+	return s.Store.ViewUsers(ctx)
 }

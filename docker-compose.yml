@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8
+    container_name: mysql-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: test_db
+    ports:
+      - "3307:3306"  # Host:Container
+
+
+  app:
+    build: .
+    container_name: gofr-task-api
+    ports:
+      - "9000:9000"
+    depends_on:
+      - db
+    environment:
+      DB_CONN_STRING: root:root123@tcp(db:3306)/test_db
