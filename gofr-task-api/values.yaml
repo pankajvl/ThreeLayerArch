@@ -1,0 +1,36 @@
+replicaCount: 2
+
+image:
+  repository: gofr-task-api
+  tag: latest
+  pullPolicy: IfNotPresent
+
+config:
+  DB_HOST: "mysql"
+  DB_USER: "root"
+  DB_PASSWORD: "root123"
+  DB_NAME: "test_db"
+  DB_PORT: "3306"
+  DB_DIALECT: "mysql"
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi
+
+hpa:
+  minReplicas: 2
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 50
+
+ingress:
+  enabled: false
+
+service:
+  type: NodePort
+  port: 8000
+  targetPort: 8000
+  nodePort: 30010

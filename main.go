@@ -14,6 +14,7 @@ import (
 	"gofr.dev/pkg/gofr"
 	"log"
 	"net/http"
+	"os"
 )
 
 // @title           Task Management API
@@ -26,7 +27,8 @@ import (
 // @contact.email  pankaj@example.com
 
 func main() {
-	db, err := datasource.New("root:root123@tcp(localhost:3306)/test_db")
+	db, err := datasource.New(os.Getenv("DB_CONN_STRING"))
+
 	if err != nil {
 		log.Println(err)
 		return

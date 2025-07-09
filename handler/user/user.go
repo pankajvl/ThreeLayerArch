@@ -31,6 +31,7 @@ func (h *UserHandler) CreateUser(ctx *gofr.Context) (any, error) {
 		return nil, err
 	}
 	if req.Name == "" {
+
 		return nil, errors.New("missing or empty name")
 	}
 

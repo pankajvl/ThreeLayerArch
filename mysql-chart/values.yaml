@@ -1,0 +1,16 @@
+mysql:
+  image: mysql:8
+  rootPassword: root123
+  database: test_db
+  storage: 500Mi
+
+  service:
+    name: mysql
+    port: 3306
+    type: ClusterIP
+
+  pvc:
+    name: mysql-pvc
+
+  ingress:
+    enabled: false
